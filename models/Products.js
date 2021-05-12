@@ -1,8 +1,8 @@
-const db = require('../util/database')
+const getDB = require('../util/database').getDB
+const mongodb = require('mongodb')
 
 module.exports = class Product {
-  constructor(id, title, price, description, imageUrl) {
-    this.id = id
+  constructor(title, price, description, imageUrl) {
     this.title = title
     this.price = price
     this.description = description
@@ -10,24 +10,30 @@ module.exports = class Product {
   }
 
   save() {
-    return db.execute(
-      `
-      INSERT INTO products (title, price, description, imageUrl)
-      VALUES (?, ?, ? ,?)
-      `,
-      [this.title, this.price, this.description, this.imageUrl]
-    )
+    const db = getDB()
+    return db.collection('products').insertOne(this)  
+  }
+
+  edit(id){
+    const db = getDB()
+    return db
+      .collection('products')
+      .updateOne({ _id: mongodb.ObjectID(id) }, {$set: this})
   }
 
   static fetchAll() {
-    return db.execute('SELECT * FROM products')
+    const db = getDB()
+    return db.collection('products').find().toArray()
   }
 
   static findById(id) {
-    return db.execute('SELECT * FROM products WHERE products.id = ?', [id])
+    const db = getDB()
+    // return db.collection('products').find({ _id: mongodb.ObjectID(id) }).next()
+    return db.collection('products').findOne({ _id: mongodb.ObjectID(id) })
   }
 
   static deleteById(id) {
-    return db.execute('DELETE FROM products WHERE products.id = ?', [id])
+    const db = getDB()
+    return db.collection('products').deleteOne({_id: mongodb.ObjectID(id)})
   }
 }
