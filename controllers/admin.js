@@ -9,13 +9,15 @@ exports.getAddProducts = (req,res,next) => {
 
 exports.postAddProduct = (req,res,next) => {
     const product = new Product( 
-        req.body.title, 
-        addZeroes(req.body.price),
-        req.body.description,
-        req.body.imageUrl
-    )
-    product.save()
-    res.redirect('/')
+       {title: req.body.title, 
+        price: req.body.price, 
+        description: req.body.description,
+        imageUrl: req.body.imageUrl,
+        userId: req.user
+    })
+    product.save().then(()=>{
+        res.redirect('/')
+    }).catch(err => console.log(err))
 }
 
 exports.getEditProduct = (req, res, next) => {
@@ -40,27 +42,25 @@ exports.postEditProduct = (req, res, next) => {
     const updateDesc = req.body.description
     const updateImageUrl = req.body.imageUrl
 
-    const updatedProduct = new Product(
-        updateTitle, 
-        updatePrice, 
-        updateDesc, 
-        updateImageUrl
-    )
-
-    updatedProduct.edit(prodId).then(() => {
+    Product.findById(prodId).then(product =>{
+        product.title = updateTitle,
+        product.price = updatePrice,
+        product.description = updateDesc,
+        product.imageUrl = updateImageUrl
+        return product.save()
+    }).then(()=>{
         res.redirect('/')
-    }).catch(err => console.log(err))
+    }).catch(err=>console.log(err))
+
+  
 
 }
 
 exports.deleteProduct = (req,res,next) => {
     const prodId = req.body.productId
-    Product.deleteById(prodId)
-    res.redirect('/')
+    Product.findOneAndRemove(prodId).then(() => {
+        res.redirect('/')
+
+    }).catch(err=>console.log(err))
 }
 
-function addZeroes(num) {
-    const dec = num.split('.')[1]
-    const len = dec && dec.length > 2 ? dec.length : 2
-    return Number(num).toFixed(len)
-}
